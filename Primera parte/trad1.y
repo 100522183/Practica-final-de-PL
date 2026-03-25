@@ -111,12 +111,7 @@ global_var_init: IDENTIF
                 sprintf(temp, "(setq %s %d)\n", $1.code, $3.value);
                 emit(temp);
              }
-             | IDENTIF '=' assignment
-             { 
-                sprintf(temp, "(setq %s %s)\n", $1.code, $3.code);
-                emit(temp);
-             }
-             ;
+            ;
 
 function_definitions: function_definition function_definitions
              | 

@@ -1,0 +1,114 @@
+// prueba.txt - Archivo de prueba para el traductor C a Lisp
+// Incluye todas las características requeridas en la práctica
+
+// 1. Declaración de variables globales
+int a;
+int b = 10;
+int x = 5, y, z = 20;
+int contador = 0, resultado;
+
+// 2. Función main con diferentes tipos de sentencias
+main() {
+    // Declaraciones locales (aunque en Lisp no hay distinción)
+    int local_var = 100;
+    int temp;
+    
+    // Asignaciones
+    a = 5;
+    b = a + 10;
+    x = x * 2;
+    
+    // 3. Operaciones aritméticas
+    resultado = (a + b) * (x - y);
+    temp = a + b - c * d / e;
+    
+    // 4. Operadores de comparación
+    if (a == b) {
+        resultado = 1;
+    }
+    
+    if (x != y) {
+        resultado = resultado + 5;
+    }
+    
+    if (contador < 10) {
+        contador = contador + 1;
+    }
+    
+    if (a > b) {
+        resultado = resultado - 1;
+    }
+    
+    if (x <= y) {
+        temp = 0;
+    }
+    
+    if (z >= a) {
+        temp = temp + 1;
+    }
+    
+    // 5. Operadores lógicos
+    if (a == b && x < y) {
+        resultado = 100;
+    }
+    
+    if (a != b || contador > 0) {
+        resultado = resultado + 50;
+    }
+    
+    if (!(a == b)) {
+        resultado = 999;
+    }
+    
+    // 6. Bucle while
+    while (contador < 5) {
+        contador = contador + 1;
+        resultado = resultado + contador;
+    }
+    
+    // 7. While con expresiones complejas
+    while (a + b > 0 && contador < 10) {
+        a = a - 1;
+        contador = contador + 1;
+    }
+    
+    // 8. Anidamiento de estructuras
+    while (x < 10) {
+        if (x % 2 == 0) {
+            resultado = resultado + x;
+        }
+        x = x + 1;
+    }
+    
+    // 9. Impresión con printf y puts
+    printf("Hola Mundo");
+    
+    printf("El valor de resultado es: ", resultado);
+    
+    printf("Suma: ", a + b);
+    
+    printf("Comparación: ", a > b);
+    
+    printf("Varios argumentos: ", a, b, resultado, contador);
+    
+    puts("Fin del programa");
+    
+    puts(resultado);
+    
+    // 10. Operador módulo
+    temp = a % 3;
+    
+    // 11. Operadores unarios (positivo/negativo)
+    temp = -a;
+    temp = +b;
+
+    
+    // 12. Expresiones anidadas
+    resultado = (a + b) * (c - d) / (e + f);
+    
+    // 13. Return (aunque main no retorna normalmente)
+    return 0;
+}
+
+// 14. Comentarios con //@ (código inline)
+//@ (print "Este es un comentario especial que se transcribe")

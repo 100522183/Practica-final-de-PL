@@ -101,14 +101,13 @@ main() {
     // 11. Operadores unarios (positivo/negativo)
     temp = -a;
     temp = +b;
-
     
-    // 12. Expresiones anidadas
+    // 12. Asignaciones encadenadas (si las soporta)
+    a = b = c = 25;
+    
+    // 13. Expresiones anidadas
     resultado = (a + b) * (c - d) / (e + f);
     
-    // 13. Return (aunque main no retorna normalmente)
+    // 14. Return (aunque main no retorna normalmente)
     return 0;
 }
-
-// 14. Comentarios con //@ (código inline)
-//@ (print "Este es un comentario especial que se transcribe")

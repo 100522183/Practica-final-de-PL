@@ -71,7 +71,7 @@ typedef struct s_attr {
 %token GE            
 
 // Precedencia y asociatividad
-%right '='
+%right '='                    // IMPORTANTE: asignación es asociativa por derecha
 %left LOGICAL_OR
 %left LOGICAL_AND
 %left EQ NE
@@ -111,7 +111,7 @@ global_var_init: IDENTIF
                 sprintf(temp, "(setq %s %d)\n", $1.code, $3.value);
                 emit(temp);
              }
-            ;
+             ;
 
 function_definitions: function_definition function_definitions
              | 
@@ -168,9 +168,16 @@ local_var_init: IDENTIF
              }
              ;
 
-// Asignación simple - sin encadenamiento
+// Asignación con soporte para asignaciones encadenadas (asociativa por derecha)
 assignment: IDENTIF '=' expression
              { 
+                sprintf(temp, "(setq %s %s) ", $1.code, $3.code);
+                $$.code = gen_code(temp);
+             }
+             | IDENTIF '=' assignment
+             { 
+                // Para asignaciones encadenadas como a = b = 5
+                // Traducimos como (setq a (setq b 5))
                 sprintf(temp, "(setq %s %s) ", $1.code, $3.code);
                 $$.code = gen_code(temp);
              }

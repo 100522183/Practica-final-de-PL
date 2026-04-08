@@ -1,0 +1,183 @@
+// prueba.txt - Versión que SÍ funciona con trad2.y
+int a;
+int b = 10;
+int x = 5, y, z = 20;
+int contador = 0, resultado;
+int mi_vector[10];
+int tabla[5];
+
+// FUNCIONES SIN TIPO DE RETORNO (como pide el enunciado para evitar conflictos)
+suma(int x, int y) {
+    return x + y;
+}
+
+cuadrado(int n) {
+    return n * n;
+}
+
+obtener_valor() {
+    return 100;
+}
+
+factorial(int n) {
+    int f = 1;
+    int i;
+    for (i = 1; i <= n; INC(i)) {
+        f = f * i;
+    }
+    return f;
+}
+
+es_par(int v) {
+    int ep = 0;
+    if (v % 2 == 0) {
+        ep = 1;
+    } else {
+        ep = 0;
+    }
+    return ep;
+}
+
+main() {
+    int local_var = 100;
+    int temp;
+    int indice;
+    int local_vector[8];
+    
+    a = 5;
+    b = a + 10;
+    x = x * 2;
+    
+    mi_vector[0] = 10;
+    mi_vector[1] = 20;
+    mi_vector[2] = a + b;
+    temp = mi_vector[0] + mi_vector[1];
+    local_vector[0] = 1;
+    local_vector[1] = 2;
+    local_vector[indice] = 5;
+    
+    resultado = (a + b) * (x - y);
+    temp = a + b - x * y / z;
+    
+    if (a == b) {
+        resultado = 1;
+    }
+    if (x != y) {
+        resultado = resultado + 5;
+    }
+    if (contador < 10) {
+        contador = contador + 1;
+    }
+    if (a > b) {
+        resultado = resultado - 1;
+    }
+    if (x <= y) {
+        temp = 0;
+    }
+    if (z >= a) {
+        temp = temp + 1;
+    }
+    
+    if (a == b && x < y) {
+        resultado = 100;
+    }
+    if (a != b || contador > 0) {
+        resultado = resultado + 50;
+    }
+    if (!(a == b)) {
+        resultado = 999;
+    }
+    
+    if (resultado > 100) {
+        resultado = resultado - 10;
+    } else {
+        resultado = resultado + 10;
+    }
+    
+    if (a > 0) {
+        if (b > 0) {
+            temp = a + b;
+        } else {
+            temp = a - b;
+        }
+    }
+    
+    while (contador < 5) {
+        contador = contador + 1;
+        resultado = resultado + contador;
+        mi_vector[contador] = contador * 10;
+    }
+    
+    while (a + b > 0 && contador < 10) {
+        a = a - 1;
+        contador = contador + 1;
+    }
+    
+    for (x = 0; x < 10; INC(x)) {
+        resultado = resultado + x;
+        mi_vector[x] = x * 2;
+    }
+    
+    for (y = 10; y > 0; DEC(y)) {
+        temp = temp + y;
+    }
+    
+    for (indice = 0; indice < 5; INC(indice)) {
+        local_vector[indice] = indice * indice;
+        for (temp = 0; temp < 3; INC(temp)) {
+            resultado = resultado + 1;
+        }
+    }
+    
+    switch (resultado) {
+        case 0:
+            resultado = 100;
+            break;
+        case 1:
+            resultado = 200;
+            break;
+        case 2:
+            resultado = 300;
+            break;
+        default:
+            resultado = 0;
+            break;
+    }
+    
+    switch (a) {
+        case 5:
+            temp = 100;
+            break;
+        case 10:
+            temp = 200;
+            break;
+        default:
+            temp = 0;
+            break;
+    }
+    
+    resultado = suma(a, b);
+    temp = cuadrado(x);
+    resultado = obtener_valor();
+    resultado = factorial(5);
+    temp = es_par(resultado);
+    
+    suma(x, y);
+    cuadrado(contador);
+    
+    resultado = suma(a + b, x * y);
+    temp = cuadrado(resultado - 5);
+    
+    printf("Hola Mundo");
+    printf("El valor de resultado es: ", resultado);
+    printf("Suma: ", a + b);
+    printf("Comparación: ", a > b);
+    printf("Múltiples argumentos: ", a, b, resultado, contador);
+    printf("Vector: ", mi_vector[0], mi_vector[1], mi_vector[2]);
+    
+    puts("Fin del programa");
+    puts(resultado);
+    puts(mi_vector[0]);
+    
+    return resultado;
+}

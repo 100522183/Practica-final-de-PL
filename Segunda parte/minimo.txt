@@ -1,0 +1,8 @@
+// minimo3.c
+prueba() {
+    return 1;
+}
+
+main() {
+    int a = prueba();
+}

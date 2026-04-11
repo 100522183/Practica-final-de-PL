@@ -180,17 +180,17 @@ parametros:
      | lista_parametros
      ;
 
-lista_parametros: IDENTIF
+lista_parametros: INTEGER IDENTIF
      {
-        sprintf(temp, "%s", $1.code);
+        sprintf(temp, "%s", $2.code);
         $$.code = gen_code(temp);
-        add_local_var($1.code);
+        add_local_var($2.code);
      }
-     | lista_parametros ',' IDENTIF
+     | lista_parametros ',' INTEGER IDENTIF
      {
-        sprintf(temp, "%s %s", $1.code, $3.code);
+        sprintf(temp, "%s %s", $1.code, $4.code);
         $$.code = gen_code(temp);
-        add_local_var($3.code);
+        add_local_var($4.code);
      }
      ;
 

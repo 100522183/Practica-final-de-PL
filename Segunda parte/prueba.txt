@@ -132,28 +132,21 @@ main() {
     switch (resultado) {
         case 0:
             resultado = 100;
-            break;
         case 1:
             resultado = 200;
-            break;
         case 2:
             resultado = 300;
-            break;
         default:
             resultado = 0;
-            break;
     }
     
     switch (a) {
         case 5:
             temp = 100;
-            break;
         case 10:
             temp = 200;
-            break;
         default:
             temp = 0;
-            break;
     }
     
     resultado = suma(a, b);

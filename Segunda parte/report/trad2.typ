@@ -5,10 +5,10 @@
   subtitulo: "Memoria Técnica: Gestión de Ámbitos, Estructuras de Control y Funciones",
   asignatura: "Procesadores del Lenguaje",
   autores: (
-    "Nombre del Alumno 1",
-    "Nombre del Alumno 2",
+    "Carlos Martin Gallardo - 100522258@alumnos.uc3m.es",
+    "Alejandro Quirante Sanz - 100522183@alumnos.uc3m.es",
   ),
-  grupo: "Grupo XX - Equipo YY",
+  grupo: "Grupo 84 - Equipo 412",
   curso: "2025/2026",
 )
 

@@ -25,361 +25,315 @@ typedef struct s_attr {
     char *code ;   // - to pass IDENTIFIER names, and other translations 
 } t_attr ;
 
-#define YYSTYPE t_attr     // stack of PDA has type t_attr
+#define YYSTYPE t_attr
+#define YYDEBUG 1
 
 %}
 
-// Definitions for explicit attributes
-
 %token NUMBER        
-%token IDENTIF       // Identifier=variable
-%token STRING        // token for string type
-%token MAIN          // token for keyword main
-%token WHILE         // token for keyword while
-%token LOOP
-%token DO
-%token SETQ
-%token SETF 
-%token DEFUN     
-%token PRINT  
-%token PRINC
-%token AND
-%token IF 
+%token IDENTIF       
+%token STRING
+%token SETQ          
+%token SETF
+%token DEFUN
+%token IF
 %token PROGN
-
-// Additional tokens for operators
+%token LOOP
+%token WHILE
+%token DO
 %token LE
 %token GE
+%token NEQ
+%token AND
 %token OR
 %token NOT
+%token PRINT
+%token PRINC
 %token MOD
 
-%left '+' '-'
-%left '*' '/' '%'
-%left NEG
+%%
 
-%%                            // Section 3 Grammar - Semantic Actions
+program : /* empty */    { ; }
+        | top_forms { ; }
+        ;
 
-axiom:        exprSeq                           { ; }      // No extra main call here
-            ;
+top_forms : top_form                { ; }
+          | top_form top_forms { ; }
+          ;
 
+top_form : var_decl      { ; }
+         | func_decl      { ; }
+         | '(' IDENTIF ')'    {  if (strcmp($2.code, "main") == 0) {
+                                     printf("main\n");
+                                }
+                              }
+         ;
 
-exprSeq:      expression1                       { ; }
-                 r_exprSeq                      { ; }
-            ;
+var_decl: '(' SETQ IDENTIF    { printf("variable %s\n", $3.code); }
+           expr ')'      { printf("%s !\n", $3.code); }
+         ;
 
+func_decl: '(' DEFUN IDENTIF   { printf(": %s\n", $3.code); }
+           '(' params ')' block ')' { printf(" ;\n"); }
+        ; 
 
-r_exprSeq:    exprSeq                           { ; }
-            |  /* lambda */                     { ; }
-            ;
+params : /* empty */      { ; }
+       | param_list   { ; }
+       ;
 
+param_list : IDENTIF          { ; }
+           | IDENTIF param_list { ; }
+           ;
 
-expression1:  expression                        { ; }
+block : statement      { ; }
+      | statement block { ; }
+      ;
 
-            | '(' SETQ IDENTIF number ')'       { printf (" variable %s %s ! ", $3.code, $3.code) ; 
-                                                  printf ("\\ (setq %s %d)\n", $3.code, $4.value); }
-                                                                                                      
-            | '(' SETF IDENTIF expression ')'   { printf (" %s ! ", $3.code) ; 
-                                                  printf ("\\ (setf %s ...)\n", $3.code); }
+statement : '(' SETF IDENTIF expr ')'            { printf("%s !\n", $3.code); }
+          | '(' PRINT STRING ')'                 { printf(".\" %s\" cr\n", $3.code); }      
+          | '(' PRINC STRING ')'                 { printf(".\" %s\" \n", $3.code); }      
+          | '(' PRINC expr ')'                   { printf(". \n"); }   
+          | if_start if_body                     { printf("else\n"); } 
+            if_body ')'                          { printf("then\n"); }
+          | if_start if_body ')'                 { printf("then\n"); }
+          | '(' LOOP WHILE                       { printf("begin "); }
+            expr                                 { printf(" while \n"); }
+            DO block ')'                         { printf("repeat\n"); }
+          ;
 
-            | '(' PRINT STRING ')'              { printf (" .\" %s \" cr ", $3.code) ; 
-                                                  printf ("\\ (print \"%s\")\n", $3.code); }
+if_start: '(' IF expr   { printf(" if \n"); }
+        ;
 
-            | '(' PRINC expression ')'          { printf (" . ") ; 
-                                                  printf ("\\ (princ)\n"); }
+if_body: '(' PROGN block ')' { ; }
+       ;
 
-            | '(' PRINC STRING ')'              { printf (" .\" %s \" ", $3.code) ; 
-                                                  printf ("\\ (princ string)\n"); }
+operation: '(' '+' expr expr ')'                 { printf("+ "); }
+         | '(' '-' expr expr ')'                 { printf("- "); }
+         | '(' '-' expr ')'                      { printf("negate "); }
+         | '(' '*' expr expr ')'                 { printf("* "); }
+         | '(' '/' expr expr ')'                 { printf("/ "); }
+         | '(' MOD expr expr ')'                 { printf("%s ", $2.code); }
+         | '(' '=' expr expr ')'                 { printf("= "); }
+         | '(' NEQ expr expr ')'                 { printf("= 0= "); }
+         | '(' '<' expr expr ')'                 { printf("< "); }
+         | '(' LE expr expr ')'                  { printf("%s ", $2.code); }
+         | '(' '>' expr expr ')'                 { printf("> "); }
+         | '(' GE expr expr ')'                  { printf("%s ", $2.code); }
+         | '(' AND expr expr ')'                 { printf("%s ", $2.code); }
+         | '(' OR expr expr ')'                  { printf("%s ", $2.code); }
+         | '(' NOT expr ')'                      { printf("0= "); }
+         ;
 
-            | '(' PROGN exprSeq ')'             { printf (" \\ (progn)\n") ; }
+expr : atom      { ; }
+     | operation { ; }
+     ;
 
-            | '(' MAIN ')'                      { printf (" main \n") ; }
+atom : NUMBER  { printf("%d ", $1.value); }
+     | IDENTIF { printf("%s @ ", $1.code); }
+     ;
 
-            | '(' DEFUN MAIN '(' ')' exprSeq ')'{ printf (": main ") ; 
-                                                  printf ("\\ (defun main)\n"); }
+%%
 
-            | '(' LOOP WHILE expression DO exprSeq ')'   
-                                                { printf ("BEGIN ") ; 
-                                                  printf ("\\ (loop while)\n"); }
+int current_line = 1;
 
-            | '(' ifHead expression1 ')'        { printf (" THEN ") ; 
-                                                  printf ("\\ (if then)\n"); }
-
-            | '(' ifHead expression1 expression1 ')'   
-                                                { printf (" ELSE THEN ") ; 
-                                                  printf ("\\ (if then else)\n"); }
-            ;
-
-
-ifHead:       IF expression                     { printf (" IF ") ; }
-            ;
-
-
-expression:   operand                           { ; }
-
-            | '(' '-' expression expression ')' { printf (" - ") ; }
-
-            | '(' '-' expression ')'            { printf (" NEGATE ") ; }   // Unary minus
-
-            | '(' '+' expression expression ')' { printf (" + ") ; }
-
-            | '(' '*' expression expression ')' { printf (" * ") ; }
-
-            | '(' '/' expression expression ')' { printf (" / ") ; }
-
-            | '(' '=' expression expression ')' { printf (" = ") ; }
-
-            | '(' '<' expression expression ')' { printf (" < ") ; }
-
-            | '(' '>' expression expression ')' { printf (" > ") ; }
-
-            | '(' LE expression expression ')'  { printf (" <= ") ; }
-
-            | '(' GE expression expression ')'  { printf (" >= ") ; }
-
-            | '(' AND expression expression ')' { printf (" AND ") ; }
-
-            | '(' OR expression expression ')'  { printf (" OR ") ; }
-
-            | '(' NOT expression ')'            { printf (" 0= ") ; }   // NOT in Lisp -> 0= in Forth
-
-            | '(' MOD expression expression ')' { printf (" MOD ") ; }
-
-            ;
-
-
-operand:      IDENTIF                           { printf (" %s @ ", $1.code) ; }
-            | number                            { ; }
-            ;
-
-
-number:       NUMBER                            { printf (" %d ", $1.value) ; }
-
-            ;
-
-
-%%                            // SECTION 4    Code in C
-
-int n_line = 1 ;
-
-void yyerror (char *message)
+void yyerror(char *msg)
 {
-    fprintf (stderr, "%s in line %d\n", message, n_line) ;
-    printf ( "\n") ;
+    fprintf(stderr, "%s at line %d\n", msg, current_line);
+    printf("\n");
 }
 
-char *int_to_string (int n)
+char *int_to_string(int n)
 {
-    char temp [1024] ;
-
-    sprintf (temp, "%d", n) ;
-
-    return gen_code (temp) ;
+    sprintf(temp, "%d", n);
+    return gen_code(temp);
 }
 
-char *char_to_string (char c)
+char *char_to_string(char c)
 {
-    char temp [1024] ;
-
-    sprintf (temp, "%c", c) ;
-
-    return gen_code (temp) ;
+    sprintf(temp, "%c", c);
+    return gen_code(temp);
 }
 
-char *gen_code (char *name)   // copy the argument to an  
-{                             // string in dynamic memory  
-    char *p ;
-    int l ;
-	
-    l = strlen (name)+1 ;
-    p = (char *) my_malloc (l) ;
-    strcpy (p, name) ;
-	
-    return p ;
-}
-
-char *my_malloc (int nbytes)     // reserve n bytes of dynamic memory 
+char *my_malloc(int size)
 {
-    char *p ;
-    static long int nb = 0 ;     // used to count the memory  
-    static int nv = 0 ;          // required in total 
+    char *ptr;
+    static long int total_bytes = 0;
+    static int alloc_calls = 0;
 
-    p = malloc (nbytes) ;
-    if (p == NULL) {
-      fprintf (stderr, "No memory left for additional %d bytes\n", nbytes) ;
-      fprintf (stderr, "%ld bytes reserved in %d calls \n", nb, nv) ;  
-      exit (0) ;
+    ptr = malloc(size);
+    if (ptr == NULL) {
+        fprintf(stderr, "No memory for %d more bytes\n", size);
+        fprintf(stderr, "Allocated %ld bytes in %d calls\n", total_bytes, alloc_calls);
+        exit(0);
     }
-    nb += (long) nbytes ;
-    nv++ ;
+    total_bytes += (long) size;
+    alloc_calls++;
 
-    return p ;
+    return ptr;
 }
 
+typedef struct s_reserved_word {
+    char *name;
+    int token;
+} t_reserved_word;
 
+t_reserved_word reserved_table[] = {
+    "setq",         SETQ,
+    "setf",         SETF,
+    "defun",        DEFUN,
+    "if",           IF,
+    "progn",        PROGN,
+    "loop",         LOOP,
+    "while",        WHILE,
+    "do",           DO,
+    "<=",           LE,
+    ">=",           GE,    
+    "/=",           NEQ,  
+    "and",          AND,
+    "or",           OR,    
+    "not",          NOT,  
+    "print",        PRINT,
+    "princ",        PRINC,
+    "mod",          MOD,
+    NULL,           0
+};
 
-/***************************************************************************/
-/***************************** Keyword Section *****************************/
-/***************************************************************************/
+t_reserved_word *lookup_reserved(char *sym_name)
+{
+    int i = 0;
+    t_reserved_word *ptr;
 
-typedef struct s_keyword { // for the reserved words of C  
-    char *name ;
-    int token ;
-} t_keyword ;
-
-t_keyword keywords [] = {     // define the keywords 
-    "main",        MAIN,      // and their associated token  
-    "defun",       DEFUN,
-    "print",       PRINT,
-    "princ",       PRINC,
-    "loop",        LOOP,
-    "while",       WHILE,
-    "do",          DO,
-    "and",         AND,
-    "if",          IF,
-    "progn",       PROGN,
-    "setq",        SETQ,
-    "setf",        SETF,
-    "mod",         MOD,
-    "not",         NOT,
-    "or",          OR,
-    "le",          LE,
-    "ge",          GE,
-    NULL,          0          // 0 to mark the end of the table
-} ;
-
-t_keyword *search_keyword (char *symbol_name)
-{                       // Search symbol names in the keyword table
-                        // and return a pointer to token register
-    int i ;
-    t_keyword *sim ;
-
-    i = 0 ;
-    sim = keywords ;
-    while (sim [i].name != NULL) {
-	    if (strcmp (sim [i].name, symbol_name) == 0) {
-                                   // strcmp(a, b) returns == 0 if a==b  
-            return &(sim [i]) ;
+    ptr = reserved_table;
+    while (ptr[i].name != NULL) {
+        if (strcmp(ptr[i].name, sym_name) == 0) {
+            return &(ptr[i]);
         }
-        i++ ;
+        i++;
     }
-
-    return NULL ;
+    return NULL;
 }
 
- 
-/***************************************************************************/
-/******************** Section for the Lexical Analyzer  ********************/
-/***************************************************************************/
-
-int yylex ()
+char *gen_code(char *src)
 {
-    int i ;
-    unsigned char c ;
-    unsigned char cc ;
-    char expandable_ops [] =  "!<>=|%&/-*+" ;
-    char temp_str [256] ;
-    t_keyword *symbol ;
+    char *dest;
+    int len;
+    
+    len = strlen(src) + 1;
+    dest = (char *) my_malloc(len);
+    strcpy(dest, src);
+    
+    return dest;
+}
 
-    do { 
-        c = getchar () ; 
-        if (c == '#') { // Ignore the lines starting with # (#define, #include) 
-            do { // WARNING that it may malfunction if a line contains # 
-                c = getchar () ; 
-            } while (c != '\n') ; 
-        } 
-        if (c == '/') { // character / can be the beginning of a comment. 
-            cc = getchar () ; 
-            if (cc != '/') { // If the following char is / is a comment, but.... 
-                ungetc (cc, stdin) ; 
-            } else { 
-                c = getchar () ; // ... 
-                if (c == '@') { // Lines starting with //@ are transcribed
-                    do { // This is inline code (embedded code in C).
-                        c = getchar () ; 
-                        putchar (c) ; 
-                    } while (c != '\n' && c != EOF) ;
-                    if (c == EOF) {
-                        ungetc (c, stdin) ;
-                    } 
-                } else { // ==> comment, ignore the line 
-                    while (c != '\n') { 
-                        c = getchar () ; 
-                    } 
-                } 
-            } 
-        } 
-        if (c == '\n') 
-            n_line++ ; 
-    } while (c == ' ' || c == '\n' || c == 10 || c == 13 || c == '\t') ;
+int yylex()
+{
+    int i;
+    unsigned char c;
+    unsigned char next;
+    char ops_list[] = "!<=|>%&/+-*";
+    char tmp_str[256];
+    t_reserved_word *kw_entry;
+
+    do {
+        c = getchar();
+
+        if (c == '#') {
+            do {
+                c = getchar();
+            } while (c != '\n');
+        }
+
+        if (c == '/') {
+            next = getchar();
+            if (next != '/') {
+                ungetc(next, stdin);
+            } else {
+                c = getchar();
+                if (c == '@') {
+                    do {
+                        c = getchar();
+                        putchar(c);
+                    } while (c != '\n');
+                } else {
+                    while (c != '\n') {
+                        c = getchar();
+                    }
+                }
+            }
+        } else if (c == '\\') {
+            c = getchar();
+        }
+        
+        if (c == '\n')
+            current_line++;
+
+    } while (c == ' ' || c == '\n' || c == 10 || c == 13 || c == '\t');
 
     if (c == '\"') {
-        i = 0 ;
+        i = 0;
         do {
-            c = getchar () ;
-            temp_str [i++] = c ;
-        } while (c != '\"' && i < 255) ;
+            c = getchar();
+            tmp_str[i++] = c;
+        } while (c != '\"' && i < 255);
+        
         if (i == 256) {
-            printf ("WARNING: string with more than 255 characters in line %d\n", n_line) ; 
-        } // we should read until the next “, but, what if it is  missing? 
-        temp_str [--i] = '\0' ;
-        yylval.code = gen_code (temp_str) ;
-        return (STRING) ;
+            printf("WARNING: string longer than 255 chars at line %d\n", current_line);
+        }
+        tmp_str[--i] = '\0';
+        yylval.code = gen_code(tmp_str);
+        return STRING;
     }
 
     if (c == '.' || (c >= '0' && c <= '9')) {
-        ungetc (c, stdin) ;
-        scanf ("%d", &yylval.value) ;
-//         printf ("\nDEV: NUMBER %d\n", yylval.value) ;       
-        return NUMBER ;
+        ungetc(c, stdin);
+        scanf("%d", &yylval.value);
+        return NUMBER;
     }
 
     if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
-        i = 0 ;
+        i = 0;
         while (((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-            (c >= '0' && c <= '9') || c == '_') && i < 255) {
-        temp_str [i++] = tolower (c) ; // ALL TO SMALL LETTERS
-        c = getchar () ; 
-    } 
-    temp_str [i] = '\0' ; // End of string  
-    ungetc (c, stdin) ; // return excess char  
+                (c >= '0' && c <= '9') || c == '_') && i < 255) {
+            tmp_str[i++] = tolower(c);
+            c = getchar();
+        }
+        tmp_str[i] = '\0';
+        ungetc(c, stdin);
 
-    yylval.code = gen_code (temp_str) ; 
-    symbol = search_keyword (yylval.code) ;
-    if (symbol == NULL) { // is not reserved word -> identifier  
-//               printf ("\nDEV: IDENTIF %s\n", yylval.code) ;    // PARA DEPURAR
-            return (IDENTIF) ;
+        yylval.code = gen_code(tmp_str);
+        kw_entry = lookup_reserved(yylval.code);
+        
+        if (kw_entry == NULL) {
+            return IDENTIF;
         } else {
-//               printf ("\nDEV: OTRO %s\n", yylval.code) ;       // PARA DEPURAR
-            return (symbol->token) ;
+            return kw_entry->token;
         }
     }
 
-    if (strchr (expandable_ops, c) != NULL) { // // look for c in expandable_ops
-        cc = getchar () ;
-        sprintf (temp_str, "%c%c", (char) c, (char) cc) ;
-        symbol = search_keyword (temp_str) ;
-        if (symbol == NULL) {
-            ungetc (cc, stdin) ;
-            yylval.code = NULL ;
-            return (c) ;
+    if (strchr(ops_list, c) != NULL) {
+        next = getchar();
+        sprintf(tmp_str, "%c%c", (char) c, (char) next);
+        kw_entry = lookup_reserved(tmp_str);
+        
+        if (kw_entry == NULL) {
+            ungetc(next, stdin);
+            yylval.code = NULL;
+            return c;
         } else {
-            yylval.code = gen_code (temp_str) ; // although it is not used
-            return (symbol->token) ;
+            yylval.code = gen_code(tmp_str);
+            return kw_entry->token;
         }
     }
 
-//    printf ("\nDEV: LITERAL %d #%c#\n", (int) c, c) ;      // PARA DEPURAR
     if (c == EOF || c == 255 || c == 26) {
-//         printf ("tEOF ") ;                                // PARA DEPURAR
-        return (0) ;
+        return 0;
     }
 
-    return c ;
+    return c;
 }
 
-
-int main ()
+int main()
 {
-    yyparse () ;
+    yyparse();
+    return 0;
 }

@@ -483,19 +483,19 @@ puts_funcion: PUTS '(' STRING ')'
              
 while_stmt: WHILE '(' expresion ')' bloque
              { 
-                sprintf(temp, "(loop while %s do (progn %s)) ", $3.code, $5.code);
+                sprintf(temp, "(loop while %s do %s) ", $3.code, $5.code);
                 $$.code = gen_code(temp);
              }
              ;
 
 if_stmt: IF '(' expresion ')' bloque %prec ELSE
              { 
-                sprintf(temp, "(if %s (progn %s)) ", $3.code, $5.code);
+                sprintf(temp, "(if %s %s) ", $3.code, $5.code);
                 $$.code = gen_code(temp);
              }
         | IF '(' expresion ')' bloque ELSE bloque
              { 
-                sprintf(temp, "(if %s (progn %s) (progn %s)) ", $3.code, $5.code, $7.code);
+                sprintf(temp, "(if %s %s %s) ", $3.code, $5.code, $7.code);
                 $$.code = gen_code(temp);
              }
         ;

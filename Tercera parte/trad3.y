@@ -442,7 +442,9 @@ printf_funcion: PRINTF '(' STRING ')'
              }
              | PRINTF '(' STRING ',' argumentos_printf ')'
              {
-                $$.code = $5.code;
+                /* Envuelve los argumentos en un PROGN */
+                sprintf(temp, "(progn %s) ", $5.code);
+                $$.code = gen_code(temp);
              }
              ;
 
@@ -452,19 +454,19 @@ argumentos_printf: argumento_printf
              }
              | argumentos_printf ',' argumento_printf
              { 
-                sprintf(temp, "%s%s", $1.code, $3.code);
+                sprintf(temp, "%s %s", $1.code, $3.code);
                 $$.code = gen_code(temp);
              }
              ;
 
 argumento_printf: expresion
              { 
-                sprintf(temp, "(princ %s) ", $1.code);
+                sprintf(temp, "(princ %s)", $1.code);
                 $$.code = gen_code(temp);
              }
              | STRING
              { 
-                sprintf(temp, "(princ \"%s\") ", $1.code);
+                sprintf(temp, "(princ \"%s\")", $1.code);
                 $$.code = gen_code(temp);
              }
              ;

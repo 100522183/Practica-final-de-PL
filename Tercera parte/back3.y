@@ -93,6 +93,7 @@ statement : '(' SETF IDENTIF expr ')'            { printf("%s !\n", $3.code); }
           | '(' PRINT STRING ')'                 { printf(".\" %s\" cr\n", $3.code); }      
           | '(' PRINC STRING ')'                 { printf(".\" %s\" \n", $3.code); }      
           | '(' PRINC expr ')'                   { printf(". \n"); }   
+          | '(' PROGN printf_sequence ')'        { printf("cr\n"); }
           | if_start if_body                     { printf("else\n"); } 
             if_body ')'                          { printf("then\n"); }
           | if_start if_body ')'                 { printf("then\n"); }
@@ -101,6 +102,14 @@ statement : '(' SETF IDENTIF expr ')'            { printf("%s !\n", $3.code); }
             DO block ')'                         { printf("repeat\n"); }
           ;
 
+printf_sequence : princ_stmt               { ; }
+                | princ_stmt printf_sequence { ; }
+                ;
+
+princ_stmt : '(' PRINC expr ')'    { printf(". "); }
+           | '(' PRINC STRING ')'  { printf(".\" %s\" ", $3.code); }
+           ;
+           
 if_start: '(' IF expr   { printf(" if \n"); }
         ;
 

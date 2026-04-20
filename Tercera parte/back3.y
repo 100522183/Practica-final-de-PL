@@ -113,7 +113,7 @@ princ_stmt : '(' PRINC expr ')'    { printf(". "); }
 if_start: '(' IF expr   { printf(" if \n"); }
         ;
 
-if_body: block  { ; }
+if_body: '(' PROGN block ')'  { ; }
        ;
 
 operation: '(' '+' expr expr ')'                 { printf("+ "); }

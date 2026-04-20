@@ -11,7 +11,7 @@
 #define FF fflush(stdout);    // para forzar la impresion inmediata
 
 int yylex () ;
-int yyerror () ;
+int yyerror (char *mensaje) ;
 char *my_malloc (int) ;
 char *gen_code (char *) ;
 char *int_to_string (int) ;
@@ -158,14 +158,14 @@ definiciones_funciones: definicion_funcion definiciones_funciones
 definicion_funcion: MAIN '(' ')' bloque
              { 
                 strcpy(current_function, "main");
-                sprintf(temp, "(defun main () %s)", $4.code);
+                sprintf(temp, "(defun main ()\n %s)", $4.code);
                 emit(temp);
                 clear_local_vars();
              }
              | IDENTIF '(' parametros ')' bloque
              {
                 strcpy(current_function, $1.code);
-                sprintf(temp, "(defun %s (%s) %s)", $1.code, $3.code, $5.code);
+                sprintf(temp, "(defun %s (%s) %s)\n", $1.code, $3.code, $5.code);
                 emit(temp);
                 clear_local_vars();
              }
@@ -282,7 +282,7 @@ init_local: IDENTIF
 asignacion: IDENTIF '=' expresion
              { 
                 char *var_name = concat_with_function($1.code);
-                sprintf(temp, "(setf %s %s) ", var_name, $3.code);
+                sprintf(temp, "(setf %s %s) \n", var_name, $3.code);
                 $$.code = gen_code(temp);
              }
              | IDENTIF '[' expresion ']' '=' expresion
@@ -443,7 +443,7 @@ printf_funcion: PRINTF '(' STRING ')'
              | PRINTF '(' STRING ',' argumentos_printf ')'
              {
                 /* Envuelve los argumentos en un PROGN */
-                sprintf(temp, "(progn %s) ", $5.code);
+                sprintf(temp, "%s", $5.code);
                 $$.code = gen_code(temp);
              }
              ;
@@ -473,38 +473,38 @@ argumento_printf: expresion
 
 puts_funcion: PUTS '(' STRING ')'
              { 
-                sprintf(temp, "(print \"%s\") ", $3.code);
+                sprintf(temp, "(print \"%s\") \n", $3.code);
                 $$.code = gen_code(temp);
              }
              | PUTS '(' expresion ')'
              { 
-                sprintf(temp, "(print %s) ", $3.code);
+                sprintf(temp, "(print %s) \n", $3.code);
                 $$.code = gen_code(temp);
              }
              ;
              
 while_stmt: WHILE '(' expresion ')' bloque
              { 
-                sprintf(temp, "(loop while %s do %s) ", $3.code, $5.code);
+                sprintf(temp, "(loop while %s do\n %s)", $3.code, $5.code);
                 $$.code = gen_code(temp);
              }
              ;
 
 if_stmt: IF '(' expresion ')' bloque %prec ELSE
              { 
-                sprintf(temp, "(if %s %s) ", $3.code, $5.code);
+                sprintf(temp, "(if %s (progn %s)) \n", $3.code, $5.code);
                 $$.code = gen_code(temp);
              }
         | IF '(' expresion ')' bloque ELSE bloque
              { 
-                sprintf(temp, "(if %s %s %s) ", $3.code, $5.code, $7.code);
+                sprintf(temp, "(if %s (progn %s) (progn %s)) \n", $3.code, $5.code, $7.code);
                 $$.code = gen_code(temp);
              }
         ;
 
 for_stmt: FOR '(' for_inicial ';' for_condicion ';' for_incremento ')' bloque
              {
-                sprintf(temp, "(loop while %s do (progn %s %s)) ", $5.code, $8.code, $7.code);
+                sprintf(temp, "(loop while %s do %s %s \n) ", $5.code, $8.code, $7.code);
                 $$.code = gen_code(temp);
              }
              ;
@@ -611,7 +611,7 @@ return_stmt: RETURN expresion
 
 llamada_funcion: IDENTIF '(' argumentos_llamada ')'
      {
-        sprintf(temp, "(%s %s) ", $1.code, $3.code);
+        sprintf(temp, "(%s %s) \n", $1.code, $3.code);
         $$.code = gen_code(temp);
      }
      ;

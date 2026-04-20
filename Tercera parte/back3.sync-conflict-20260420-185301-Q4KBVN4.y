@@ -63,43 +63,35 @@ top_forms : top_form                { ; }
 
 top_form : var_decl      { ; }
          | func_decl      { ; }
-         | '(' IDENTIF ')'    { if ($3.code == "main"){printf("%s\n", $3.code);}}
+         | '(' IDENTIF ')'    {  if (strcmp($2.code, "main") == 0) {
+                                     printf("main\n");
+                                }
+                              }
          ;
 
 var_decl: '(' SETQ IDENTIF    { printf("variable %s\n", $3.code); }
            expr ')'      { printf("%s !\n", $3.code); }
          ;
 
-func_decl: '(' DEFUN IDENTIF '(' params ')' { printf(": %s", $3.code);
-                                              if ($3.code == "main"){
-                                              printf("(%s--)\n", $3.code, $5.code);
-                                              char delims[] = " ";
-                                              char * token = strtok($5.code, delims);
-                                              while (token != NULL){
-                                                printf("VARIABLE %s\n", token);
-                                                token = strtok(NULL, delims);
-                                              }}}
-         block ')'  { printf(";\n"); }
+func_decl: '(' DEFUN IDENTIF   { printf(": %s\n", $3.code); }
+           '(' params ')' block ')' { printf(" ;\n"); }
         ; 
 
-params : /* empty */      { $$.code = gen_code(""); }
-       | param_list   { $$.code = $1.code; }
+params : /* empty */      { ; }
+       | param_list   { ; }
        ;
-param_list : IDENTIF          { printf("%s\n", $1.code); }
-           | IDENTIF param_list { printf("%s\n", $1.code); }
+
+param_list : IDENTIF          { ; }
+           | IDENTIF param_list { ; }
            ;
-func_params: expr      { ; }
-           | expr func_params { ; }
-            ;
+
 block : statement      { ; }
       | statement block { ; }
       ;
-function_call: '(' IDENTIF func_params')'       { printf("%s\n", $2.code);}
-          | '(' IDENTIF ')'       { printf("%s\n", $2.code);}
 
 statement : '(' SETF IDENTIF expr ')'            { printf("%s !\n", $3.code); }
-          | '(' PRINT STRING ')'                 { printf(". \" %s\" cr\n", $3.code); }      
-          | '(' PRINC STRING ')'                 { printf(". \" %s\" \n", $3.code); }      
+          | '(' PRINT STRING ')'                 { printf(".\" %s\" cr\n", $3.code); }      
+          | '(' PRINC STRING ')'                 { printf(".\" %s\" \n", $3.code); }      
           | '(' PRINC expr ')'                   { printf(". \n"); }   
           | '(' PROGN printf_sequence ')'        { printf("cr\n"); }
           | if_start if_body                     { printf("else\n"); } 
@@ -108,7 +100,6 @@ statement : '(' SETF IDENTIF expr ')'            { printf("%s !\n", $3.code); }
           | '(' LOOP WHILE                       { printf("begin "); }
             expr                                 { printf(" while \n"); }
             DO block ')'                         { printf("repeat\n"); }
-          | function_call                        { ; }
           ;
 
 printf_sequence : princ_stmt               { ; }
@@ -122,7 +113,7 @@ princ_stmt : '(' PRINC expr ')'    { printf(". "); }
 if_start: '(' IF expr   { printf(" if \n"); }
         ;
 
-if_body: '(' PROGN block ')'  { ; }
+if_body: '(' PROGN block ')' { ; }
        ;
 
 operation: '(' '+' expr expr ')'                 { printf("+ "); }

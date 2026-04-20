@@ -70,23 +70,31 @@ var_decl: '(' SETQ IDENTIF    { printf("variable %s\n", $3.code); }
            expr ')'      { printf("%s !\n", $3.code); }
          ;
 
-func_decl: '(' DEFUN IDENTIF '(' params ')' { printf(": %s", $3.code);
-                                              if ($3.code == "main"){
-                                              printf("(%s--)\n", $3.code, $5.code);
+func_decl: '(' DEFUN IDENTIF '(' params ')' { 
                                               char delims[] = " ";
                                               char * token = strtok($5.code, delims);
                                               while (token != NULL){
-                                                printf("VARIABLE %s\n", token);
+                                                printf("variable %s\n", token);
                                                 token = strtok(NULL, delims);
-                                              }}}
+                                              }
+                                              printf(": %s ", $3.code);
+                                              if ($3.code != "main"){
+                                              printf("( %s-- )\n", $5.code);
+                                              
+                                              char * token = strtok($5.code, delims);
+                                              while (token != NULL){
+                                                printf("%s !\n", token);
+                                                token = strtok(NULL, delims);
+                                              }
+                                              }}
          block ')'  { printf(";\n"); }
         ; 
 
 params : /* empty */      { $$.code = gen_code(""); }
        | param_list   { $$.code = $1.code; }
        ;
-param_list : IDENTIF          { printf("%s\n", $1.code); }
-           | IDENTIF param_list { printf("%s\n", $1.code); }
+param_list : IDENTIF          { ; }
+           | IDENTIF param_list { ; }
            ;
 func_params: expr      { ; }
            | expr func_params { ; }
@@ -98,8 +106,8 @@ function_call: '(' IDENTIF func_params')'       { printf("%s\n", $2.code);}
           | '(' IDENTIF ')'       { printf("%s\n", $2.code);}
 
 statement : '(' SETF IDENTIF expr ')'            { printf("%s !\n", $3.code); }
-          | '(' PRINT STRING ')'                 { printf(". \" %s\" cr\n", $3.code); }      
-          | '(' PRINC STRING ')'                 { printf(". \" %s\" \n", $3.code); }      
+          | '(' PRINT STRING ')'                 { printf(".\" %s\" cr\n", $3.code); }      
+          | '(' PRINC STRING ')'                 { printf(".\" %s\" cr\n", $3.code); }      
           | '(' PRINC expr ')'                   { printf(". \n"); }   
           | '(' PROGN printf_sequence ')'        { printf("cr\n"); }
           | if_start if_body                     { printf("else\n"); } 

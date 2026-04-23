@@ -154,13 +154,14 @@ definicion_funcion: MAIN '(' ')' bloque
                 printf("(defun main ()\n %s)\n", $4.code);
                 clear_local_vars();
              }
-             | IDENTIF '(' parametros ')' bloque
+             | IDENTIF '(' parametros ')' bloque return_stmt_bien_estructurado
              {
                 strcpy(current_function, $1.code);
-                printf("(defun %s (%s) %s)\n", $1.code, $3.code, $5.code);
+                printf("(defun %s (%s) %s (%s))\n", $1.code, $3.code, $5.code, $6.code);
                 clear_local_vars();
              }
              ;
+             
 
 parametros: 
      { $$.code = gen_code(""); }
@@ -223,10 +224,6 @@ sentencia: declaracion_local
              | switch_stmt
              { 
                 $$.code = gen_code("");
-             }
-             | return_stmt ';'
-             { 
-                $$.code = $1.code;
              }
              | llamada_funcion ';'
              { 
@@ -496,7 +493,7 @@ if_stmt: IF '(' expresion ')' bloque %prec ELSE
 
 for_stmt: FOR '(' for_inicial ';' for_condicion ';' for_incremento ')' bloque
              {
-                sprintf(temp, "(loop while %s do %s %s \n) ", $5.code, $9.code, $7.code);
+                sprintf(temp, "%s\n(loop while %s do %s %s \n) ", $3.code, $5.code, $9.code, $7.code);
                 $$.code = gen_code(temp);
              }
              ;
@@ -589,12 +586,11 @@ default_case:
      }
      ;
 
-return_stmt: RETURN expresion
-             { 
-                sprintf(temp, "(%s) ", $2.code);
-                $$.code = gen_code(temp);
-             }
-             ;
+return_stmt_bien_estructurado: 
+                  {$$.code = gen_code("");};
+            
+            | RETURN expresion { sprintf(temp, "%s", $2.code);
+                                 $$.code = gen_code(temp); };
 
 llamada_funcion: IDENTIF '(' argumentos_llamada ')'
      {

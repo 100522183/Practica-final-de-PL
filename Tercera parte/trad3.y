@@ -27,7 +27,7 @@ typedef struct s_local_var {
 } t_local_var;
 
 t_local_var *local_var_table = NULL;
-char current_function[256] = "global";
+char current_function[256] = "";
 
 void add_local_var(char *name) {
     t_local_var *new_var = (t_local_var *) my_malloc(sizeof(t_local_var));
@@ -148,16 +148,18 @@ definiciones_funciones: definicion_funcion definiciones_funciones {};
              | {}
              ;
 
-definicion_funcion: MAIN '(' ')' bloque
+definicion_funcion: MAIN {strcpy(current_function, "main");
+                          printf("(defun main ()");} r_definicion_main { ; }
+             | IDENTIF {strcpy(current_function, $1.code);
+                        printf("(defun %s", $1.code);} r_definicion_resto { ; };
+r_definicion_main: '(' ')' bloque
              { 
-                strcpy(current_function, "main");
-                printf("(defun main ()\n %s)\n", $4.code);
+                printf("\n %s)\n", $3.code);
                 clear_local_vars();
-             }
-             | IDENTIF '(' parametros ')' bloque return_stmt_bien_estructurado
+             };
+r_definicion_resto: '(' parametros ')' bloque
              {
-                strcpy(current_function, $1.code);
-                printf("(defun %s (%s) %s (%s))\n", $1.code, $3.code, $5.code, $6.code);
+                printf(" (%s) %s)\n", $2.code, $4.code);
                 clear_local_vars();
              }
              ;
@@ -232,6 +234,10 @@ sentencia: declaracion_local
              | bloque
              { 
                 $$.code = $1.code;
+             }
+             | return_stmt ';'
+             {
+               $$.code = $1.code;
              }
              ;
 
@@ -586,11 +592,17 @@ default_case:
      }
      ;
 
-return_stmt_bien_estructurado: 
-                  {$$.code = gen_code("");};
-            
-            | RETURN expresion { sprintf(temp, "%s", $2.code);
-                                 $$.code = gen_code(temp); };
+return_stmt: RETURN expresion
+             { 
+                sprintf(temp, "(return-from %s %s) ", current_function, $2.code);
+                $$.code = gen_code(temp);
+             }
+             | RETURN
+             { 
+                sprintf(temp, "(return-from %s) ", current_function);
+                $$.code = gen_code(temp);
+             }
+             ;
 
 llamada_funcion: IDENTIF '(' argumentos_llamada ')'
      {

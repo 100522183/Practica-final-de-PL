@@ -18,16 +18,8 @@ char *int_to_string (int) ;
 char *char_to_string (char) ;
 
 char temp [2048] ;
-char output_buffer[65536];
 int output_pos = 0;
 
-void emit(char *str) {
-    int len = strlen(str);
-    if (output_pos + len < 65536) {
-        strcpy(output_buffer + output_pos, str);
-        output_pos += len;
-    }
-}
 
 typedef struct s_local_var {
     char *name;
@@ -116,64 +108,63 @@ typedef struct s_attr {
 
 %%
 
-programa:      declaraciones_globales definiciones_funciones
+programa:      declaraciones_globales {printf("%s", $1.code);} definiciones_funciones
              {
-                emit("\n");
-                emit("(main)\n");
              }
              ;
 
-declaraciones_globales: 
-             | declaracion_global declaraciones_globales
+declaraciones_globales: {sprintf(temp, "");
+   $$.code = gen_code(temp);};
+             | declaracion_global declaraciones_globales {sprintf(temp, "%s%s", $1.code, $2.code);
+                                                          $$.code = gen_code(temp);}
              ;
 
-declaracion_global: INTEGER lista_global ';'
+declaracion_global: INTEGER lista_global ';' { $$.code = $2.code; }
              ;
 
-lista_global: init_global
-             | lista_global ',' init_global
+lista_global: init_global                   {$$.code = $1.code;};
+             | lista_global ',' init_global { sprintf(temp, "%s%s", $1.code, $3.code);
+                                              $$.code = gen_code(temp);}
              ;
 
 init_global: IDENTIF
              { 
                 sprintf(temp, "(setq %s 0)\n", $1.code);
-                emit(temp);
+                $$.code = gen_code(temp);
              }
              | IDENTIF '=' NUMBER
              { 
                 sprintf(temp, "(setq %s %d)\n", $1.code, $3.value);
-                emit(temp);
+                $$.code = gen_code(temp);
              }
              | IDENTIF '[' NUMBER ']'
              {
                 sprintf(temp, "(setq %s (make-array %d))\n", $1.code, $3.value);
-                emit(temp);
+                $$.code = gen_code(temp);
              }
              ;
 
-definiciones_funciones: definicion_funcion definiciones_funciones
-             | 
+definiciones_funciones: definicion_funcion definiciones_funciones {};
+             | {}
              ;
 
 definicion_funcion: MAIN '(' ')' bloque
              { 
                 strcpy(current_function, "main");
-                sprintf(temp, "(defun main ()\n %s)", $4.code);
-                emit(temp);
+                printf("(defun main ()\n %s)\n", $4.code);
                 clear_local_vars();
              }
              | IDENTIF '(' parametros ')' bloque
              {
                 strcpy(current_function, $1.code);
-                sprintf(temp, "(defun %s (%s) %s)\n", $1.code, $3.code, $5.code);
-                emit(temp);
+                printf("(defun %s (%s) %s)\n", $1.code, $3.code, $5.code);
                 clear_local_vars();
              }
              ;
 
 parametros: 
      { $$.code = gen_code(""); }
-     | lista_parametros
+     | lista_parametros { $$.code = $1.code; }
      ;
 
 lista_parametros: INTEGER IDENTIF
@@ -182,11 +173,11 @@ lista_parametros: INTEGER IDENTIF
         $$.code = gen_code(temp);
         add_local_var($2.code);
      }
-     | lista_parametros ',' INTEGER IDENTIF
+     |  INTEGER IDENTIF ',' lista_parametros 
      {
-        sprintf(temp, "%s %s", $1.code, $4.code);
+        sprintf(temp, "%s %s", $2.code, $4.code);
         $$.code = gen_code(temp);
-        add_local_var($4.code);
+        add_local_var($2.code);
      }
      ;
 
@@ -263,19 +254,19 @@ init_local: IDENTIF
              { 
                 add_local_var($1.code);
                 sprintf(temp, "(setq %s_%s 0) ", current_function, $1.code);
-                emit(temp);
+                $$.code = gen_code(temp);
              }
              | IDENTIF '=' NUMBER
              { 
                 add_local_var($1.code);
                 sprintf(temp, "(setq %s_%s %d) ", current_function, $1.code, $3.value);
-                emit(temp);
+                $$.code = gen_code(temp);
              }
              | IDENTIF '[' NUMBER ']'
              {
                 add_local_var($1.code);
                 sprintf(temp, "(setq %s_%s (make-array %d)) ", current_function, $1.code, $3.value);
-                emit(temp);
+                $$.code = gen_code(temp);
              }
              ;
 
@@ -584,16 +575,16 @@ lista_case:
 case_item: CASE NUMBER ':' lista_sentencias
      {
         sprintf(temp, "(%d ", $2.value);
-        emit(temp);
-        emit(") ");
+        $$.code = gen_code(temp);
+        printf(") ");
      }
      ;
 
 default_case: 
      | DEFAULT ':' lista_sentencias
      {
-        emit("(otherwise ");
-        emit(") ");
+        printf("(otherwise ");
+        printf(") ");
      }
      ;
 
@@ -727,6 +718,7 @@ char *gen_code (char *name)
 
 int yylex ()
 {
+// NO MODIFICAR ESTA FUNCION SIN PERMISO
     int i ;
     unsigned char c ;
     unsigned char cc ;
@@ -737,27 +729,30 @@ int yylex ()
     do {
         c = getchar () ;
 
-        if (c == '#') {
-            do {
+        if (c == '#') {	// Ignora las lineas que empiezan por #  (#define, #include)
+            do {		//	OJO que puede funcionar mal si una linea contiene #
                 c = getchar () ;
             } while (c != '\n') ;
         }
 
-        if (c == '/') {
+        if (c == '/') {	// Si la linea contiene un / puede ser inicio de comentario
             cc = getchar () ;
-            if (cc != '/') {
+            if (cc != '/') {   // Si el siguiente char es /  es un comentario, pero...
                 ungetc (cc, stdin) ;
             } else {
-                while (c != '\n' && c != EOF) {
-                    c = getchar () ;
-                }
-                if (c == '\n') {
-                    n_line++ ;
+                c = getchar () ;	// ...
+                if (c == '@') {	// Si es la secuencia //@  ==> transcribimos la linea
+                    do {		// Se trata de codigo inline (Codigo embebido en C)
+                        c = getchar () ;
+                        putchar (c) ;
+                    } while (c != '\n') ;
+                } else {		// ==> comentario, ignorar la linea
+                    while (c != '\n') {
+                        c = getchar () ;
+                    }
                 }
             }
-        } else if (c == '\\') {
-            c = getchar () ;
-        }
+        } else if (c == '\\') c = getchar () ;
 		
         if (c == '\n')
             n_line++ ;
@@ -772,15 +767,16 @@ int yylex ()
         } while (c != '\"' && i < 255) ;
         if (i == 256) {
             printf ("AVISO: string con mas de 255 caracteres en linea %d\n", n_line) ;
-        }
+        }		 	// habria que leer hasta el siguiente " , pero, y si falta?
         temp_str [--i] = '\0' ;
         yylval.code = gen_code (temp_str) ;
-        return STRING ;
+        return (STRING) ;
     }
 
     if (c == '.' || (c >= '0' && c <= '9')) {
         ungetc (c, stdin) ;
         scanf ("%d", &yylval.value) ;
+//         printf ("\nDEV: NUMBER %d\n", yylval.value) ;        // PARA DEPURAR
         return NUMBER ;
     }
 
@@ -796,29 +792,33 @@ int yylex ()
 
         yylval.code = gen_code (temp_str) ;
         symbol = search_keyword (yylval.code) ;
-        if (symbol == NULL) {
-            return IDENTIF ;
+        if (symbol == NULL) {    // no es palabra reservada -> identificador antes vrariabre
+//               printf ("\nDEV: IDENTIF %s\n", yylval.code) ;    // PARA DEPURAR
+            return (IDENTIF) ;
         } else {
-            return symbol->token ;
+//               printf ("\nDEV: OTRO %s\n", yylval.code) ;       // PARA DEPURAR
+            return (symbol->token) ;
         }
     }
 
-    if (strchr (ops_expandibles, c) != NULL) {
+    if (strchr (ops_expandibles, c) != NULL) { // busca c en ops_expandibles
         cc = getchar () ;
         sprintf (temp_str, "%c%c", (char) c, (char) cc) ;
         symbol = search_keyword (temp_str) ;
         if (symbol == NULL) {
             ungetc (cc, stdin) ;
             yylval.code = NULL ;
-            return c ;
+            return (c) ;
         } else {
-            yylval.code = gen_code (temp_str) ;
-            return symbol->token ;
+            yylval.code = gen_code (temp_str) ; // aunque no se use
+            return (symbol->token) ;
         }
     }
 
+//    printf ("\nDEV: LITERAL %d #%c#\n", (int) c, c) ;      // PARA DEPURAR
     if (c == EOF || c == 255 || c == 26) {
-        return 0 ;
+//         printf ("tEOF ") ;                                // PARA DEPURAR
+        return (0) ;
     }
 
     return c ;
@@ -826,10 +826,6 @@ int yylex ()
 
 int main ()
 {
-    output_pos = 0;
-    output_buffer[0] = '\0';
-    strcpy(current_function, "global");
     yyparse ();
-    printf("%s", output_buffer);
     return 0;
 }

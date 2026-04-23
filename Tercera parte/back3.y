@@ -14,7 +14,7 @@ char *my_malloc (int) ;
 char *gen_code (char *) ;
 char *int_to_string (int) ;
 char *char_to_string (char) ;
-
+char *token ;
 char temp [2048] ;
 
 
@@ -50,6 +50,7 @@ typedef struct s_attr {
 %token PRINT
 %token PRINC
 %token MOD
+%token MAIN
 
 %%
 
@@ -63,30 +64,38 @@ top_forms : top_form                { ; }
 
 top_form : var_decl      { ; }
          | func_decl      { ; }
-         | '(' IDENTIF ')'    { if ($3.code == "main"){printf("%s\n", $3.code);}}
+         | '(' MAIN ')'    { {printf("%s\n", $3.code);}}
          ;
 
 var_decl: '(' SETQ IDENTIF    { printf("variable %s\n", $3.code); }
            expr ')'      { printf("%s !\n", $3.code); }
          ;
 
-func_decl: '(' DEFUN IDENTIF '(' params ')' { 
+func_decl: '(' DEFUN MAIN '(' params ')' { 
                                               char delims[] = " ";
-                                              char * token = strtok($5.code, delims);
+                                              token = strtok($5.code, delims);
+                                              while (token != NULL){
+                                                printf("variable %s\n", token);
+                                                token = strtok(NULL, delims);
+                                              }
+                                              printf(": %s ", $3.code);}
+         block ')'  { printf(";\n"); };
+         |'(' DEFUN IDENTIF '(' params ')' { 
+                                              char delims[] = " ";
+                                              token = strtok($5.code, delims);
                                               while (token != NULL){
                                                 printf("variable %s\n", token);
                                                 token = strtok(NULL, delims);
                                               }
                                               printf(": %s ", $3.code);
-                                              if ($3.code != "main"){
                                               printf("( %s-- )\n", $5.code);
                                               
-                                              char * token = strtok($5.code, delims);
+                                              token = strtok($5.code, delims);
                                               while (token != NULL){
                                                 printf("%s !\n", token);
                                                 token = strtok(NULL, delims);
                                               }
-                                              }}
+                                              }
          block ')'  { printf(";\n"); }
         ; 
 
@@ -204,6 +213,7 @@ typedef struct s_reserved_word {
 } t_reserved_word;
 
 t_reserved_word reserved_table[] = {
+    "main",         MAIN,
     "setq",         SETQ,
     "setf",         SETF,
     "defun",        DEFUN,

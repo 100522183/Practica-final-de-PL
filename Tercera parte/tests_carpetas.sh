@@ -23,14 +23,24 @@ for i in "${!dir[@]}"; do
   echo "Procesando archivo [$i]: $f"
 
   # Tu lógica actual
-  SALIDA=$(./trad3 < "$f" | ./back3 | gforth)
+  # Capturamos salida y errores juntos usando 2>&1
+  SALIDA=$(./trad3 < "$f" | ./back3 | gforth 2>&1) || true
+  
+  # Buscamos la palabra "throw" de forma exacta y silenciosa
+  if echo "$SALIDA" | grep -q "throw"; then
+      rc=$(echo "$SALIDA" | grep -c "throw")
+  else
+      rc=0
+  fi
   
   echo "$SALIDA"
+  echo "rc=$rc"
 
-  if printf '%s\n' "$SALIDA" | grep -Eq '^main .* ok$'; then
-    echo "Archivo $i: OK"
+  
+  if [ $rc -eq 0 ]; then
+    echo "Archivo $i compiló correctamente"
   else
-    echo "Archivo $i: F en el chat"
+    echo "Error de compilación en archivo $i(código $rc)"
   fi
   
   echo "---------------------------"

@@ -1,0 +1,53 @@
+graph TD
+    %% Raíz del programa
+    Prog[programa] --> Glob[declaraciones_globales]
+    Prog --> Funcs[definiciones_funciones]
+
+    %% Rama Global
+    Glob --> DeclG[declaracion_global]
+    DeclG --> INT[INTEGER]
+    DeclG --> LG[lista_global]
+    LG --> IG[init_global]
+    IG --> ID1[IDENTIF]
+    IG --> OP_EQ[=]
+    IG --> NUM1[NUMBER]
+
+    %% Rama Funciones
+    Funcs --> DF[definicion_funcion]
+    DF --> MAIN[MAIN]
+    DF --> PAR['( )']
+    DF --> BLQ[bloque]
+
+    %% Estructura del Bloque
+    BLQ --> L1['{']
+    BLQ --> LS[lista_sentencias]
+    BLQ --> L2['}']
+
+    %% Tipos de Sentencias
+    LS --> S1[sentencia]
+    S1 --> ASIG[asignacion]
+    S1 --> IF[if_stmt]
+    S1 --> WH[while_stmt]
+    S1 --> RET[return_stmt]
+
+    %% Detalle de Expresiones (Recursión)
+    ASIG --> ID2[IDENTIF]
+    ASIG --> EQ2[=]
+    ASIG --> EXPR[expresion]
+    
+    EXPR --> ELOG[expr_logica]
+    ELOG --> ECOMP[expr_comparacion]
+    ECOMP --> EADD[expr_aditiva]
+    EADD --> EMULT[expr_multiplicativa]
+    EMULT --> EUN[expr_unaria]
+    EUN --> EPRIM[expr_primaria]
+    
+    %% Hojas finales
+    EPRIM --> ID3[IDENTIF]
+    EPRIM --> NUM2[NUMBER]
+    EPRIM --> LLAM[llamada_funcion]
+
+    %% Estilo
+    style Prog fill:#f9f,stroke:#333,stroke-width:4px
+    style DF fill:#bbf,stroke:#333
+    style EXPR fill:#dfd,stroke:#333

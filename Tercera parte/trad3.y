@@ -171,13 +171,11 @@ lista_parametros: INTEGER IDENTIF
      {
         sprintf(temp, "%s", $2.code);
         $$.code = gen_code(temp);
-        add_local_var($2.code);
      }
      |  INTEGER IDENTIF ',' lista_parametros 
      {
         sprintf(temp, "%s %s", $2.code, $4.code);
         $$.code = gen_code(temp);
-        add_local_var($2.code);
      }
      ;
 
@@ -200,7 +198,7 @@ lista_sentencias:
 
 sentencia: declaracion_local
              { 
-                $$.code = gen_code("");
+                $$.code = $1.code;
              }
              | asignacion ';'
              { 
@@ -242,12 +240,13 @@ sentencia: declaracion_local
 
 declaracion_local: INTEGER lista_local ';'
              {
-                $$.code = gen_code("");
+                $$.code = $2.code;
              }
              ;
 
-lista_local: init_local
-             | lista_local ',' init_local
+lista_local: init_local {$$.code = $1.code;};
+             | lista_local ',' init_local {sprintf(temp, "%s%s", $1.code, $3.code);
+                                           $$.code = gen_code(temp);};
              ;
 
 init_local: IDENTIF
@@ -401,7 +400,9 @@ expr_unaria: expr_primaria
 
 expr_primaria: IDENTIF
              { 
+               if (is_local_var($1.code)){
                 $$.code = concat_with_function($1.code);
+                }
              }
              | NUMBER
              { 
@@ -495,7 +496,7 @@ if_stmt: IF '(' expresion ')' bloque %prec ELSE
 
 for_stmt: FOR '(' for_inicial ';' for_condicion ';' for_incremento ')' bloque
              {
-                sprintf(temp, "(loop while %s do %s %s \n) ", $5.code, $8.code, $7.code);
+                sprintf(temp, "(loop while %s do %s %s \n) ", $5.code, $9.code, $7.code);
                 $$.code = gen_code(temp);
              }
              ;
@@ -590,12 +591,7 @@ default_case:
 
 return_stmt: RETURN expresion
              { 
-                sprintf(temp, "(return-from %s %s) ", current_function, $2.code);
-                $$.code = gen_code(temp);
-             }
-             | RETURN
-             { 
-                sprintf(temp, "(return-from %s) ", current_function);
+                sprintf(temp, "(%s) ", $2.code);
                 $$.code = gen_code(temp);
              }
              ;
@@ -616,7 +612,7 @@ lista_argumentos: expresion
      {
         $$.code = $1.code;
      }
-     | lista_argumentos ',' expresion
+     |  expresion ',' lista_argumentos 
      {
         sprintf(temp, "%s %s", $1.code, $3.code);
         $$.code = gen_code(temp);

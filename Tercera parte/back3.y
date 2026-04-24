@@ -54,117 +54,119 @@ typedef struct s_attr {
 
 %%
 
-program : /* empty */    { ; }
-        | top_forms { ; }
+program : /* empty */                   { ; }
+        | top_forms                     { ; }
         ;
 
-top_forms : top_form                { ; }
-          | top_form top_forms { ; }
+top_forms : top_form                    { ; }
+          | top_form top_forms          { ; }
           ;
 
-top_form : var_decl      { ; }
-         | func_decl      { ; }
-         | '(' MAIN ')'    { {printf("%s\n", $3.code);}}
+top_form : var_decl                     { ; }
+         | func_decl                    { ; }
+         | '(' MAIN ')'                 { printf("%s\n", $3.code); }
          ;
 
-var_decl: '(' SETQ IDENTIF    { printf("variable %s\n", $3.code); }
-           expr ')'      { printf("%s !\n", $3.code); }
+var_decl: '(' SETQ IDENTIF              { printf("variable %s\n", $3.code); }
+           expr ')'                     { printf("%s !\n", $3.code); }
          ;
 
-func_decl: '(' DEFUN MAIN '(' params ')' { 
-                                              char delims[] = " ";
-                                              token = strtok($5.code, delims);
-                                              while (token != NULL){
-                                                printf("variable %s\n", token);
-                                                token = strtok(NULL, delims);
-                                              }
-                                              printf(": %s ", $3.code);}
-         block ')'  { printf(";\n"); };
-         |'(' DEFUN IDENTIF '(' params ')' { 
-                                              char delims[] = " ";
-                                              token = strtok($5.code, delims);
-                                              while (token != NULL){
-                                                printf("variable %s\n", token);
-                                                token = strtok(NULL, delims);
-                                              }
-                                              printf(": %s ", $3.code);
-                                              printf("( %s-- )\n", $5.code);
-                                              
-                                              token = strtok($5.code, delims);
-                                              while (token != NULL){
-                                                printf("%s !\n", token);
-                                                token = strtok(NULL, delims);
-                                              }
-                                              }
-         block ')'  { printf(";\n"); }
+func_decl: '(' DEFUN MAIN '(' params ')' { char delims[] = " ";
+                                           token = strtok($5.code, delims);
+                                           while (token != NULL){
+                                             printf("variable %s\n", token);
+                                             token = strtok(NULL, delims);
+                                           }
+                                           printf(": %s ", $3.code); }
+         block ')'                      { printf(";\n"); }
+
+         |'(' DEFUN IDENTIF '(' params ')' { char delims[] = " ";
+                                             token = strtok($5.code, delims);
+                                             while (token != NULL){
+                                               printf("variable %s\n", token);
+                                               token = strtok(NULL, delims);
+                                             }
+                                             printf(": %s ", $3.code);
+                                             printf("( %s-- )\n", $5.code);
+                                             
+                                             token = strtok($5.code, delims);
+                                             while (token != NULL){
+                                               printf("%s !\n", token);
+                                               token = strtok(NULL, delims);
+                                             } }
+         block ')'                      { printf(";\n"); }
         ; 
 
-params : /* empty */      { $$.code = gen_code(""); }
-       | param_list   { $$.code = $1.code; }
+params : /* empty */                    { $$.code = gen_code(""); }
+       | param_list                     { $$.code = $1.code; }
        ;
-param_list : IDENTIF          { ; }
-           | IDENTIF param_list { ; }
-           ;
-func_params: expr      { ; }
-           | expr func_params { ; }
-            ;
-block : statement      { ; }
-      | statement block { ; }
-      ;
-function_call: '(' IDENTIF func_params')'       { printf("%s\n", $2.code);}
-          | '(' IDENTIF ')'       { printf("%s\n", $2.code);}
 
-statement : '(' SETF IDENTIF expr ')'            { printf("%s !\n", $3.code); }
-          | '(' PRINT STRING ')'                 { printf(".\" %s\" cr\n", $3.code); }      
-          | '(' PRINC STRING ')'                 { printf(".\" %s\" cr\n", $3.code); }      
-          | '(' PRINC expr ')'                   { printf(". \n"); }   
-          | '(' PROGN printf_sequence ')'        { printf("cr\n"); }
-          | if_start if_body                     { printf("else\n"); } 
-            if_body ')'                          { printf("then\n"); }
-          | if_start if_body ')'                 { printf("then\n"); }
-          | '(' LOOP WHILE                       { printf("begin "); }
-            expr                                 { printf(" while \n"); }
-            DO block ')'                         { printf("repeat\n"); }
-          | function_call                        { ; }
+param_list : IDENTIF                    { ; }
+           | IDENTIF param_list         { ; }
+           ;
+
+func_params: expr                       { ; }
+           | expr func_params           { ; }
+            ;
+
+block : statement                       { ; }
+      | statement block                 { ; }
+      ;
+
+function_call: '(' IDENTIF func_params')' { printf("%s\n", $2.code); }
+          | '(' IDENTIF ')'             { printf("%s\n", $2.code); }
+
+statement : '(' SETF IDENTIF expr ')'   { printf("%s !\n", $3.code); }
+          | '(' PRINT STRING ')'        { printf(".\" %s\" cr\n", $3.code); }      
+          | '(' PRINC STRING ')'        { printf(".\" %s\" cr\n", $3.code); }      
+          | '(' PRINC expr ')'          { printf(". \n"); }   
+          | '(' PROGN printf_sequence ')' { printf("cr\n"); }
+          | if_start if_body            { printf("else\n"); } 
+            if_body ')'                 { printf("then\n"); }
+          | if_start if_body ')'        { printf("then\n"); }
+          | '(' LOOP WHILE              { printf("begin "); }
+            expr                        { printf(" while \n"); }
+            DO block ')'                { printf("repeat\n"); }
+          | function_call               { ; }
           ;
 
-printf_sequence : princ_stmt               { ; }
+printf_sequence : princ_stmt            { ; }
                 | princ_stmt printf_sequence { ; }
                 ;
 
-princ_stmt : '(' PRINC expr ')'    { printf(". "); }
-           | '(' PRINC STRING ')'  { printf(".\" %s\" ", $3.code); }
+princ_stmt : '(' PRINC expr ')'         { printf(". "); }
+           | '(' PRINC STRING ')'       { printf(".\" %s\" ", $3.code); }
            ;
            
-if_start: '(' IF expr   { printf(" if \n"); }
+if_start: '(' IF expr                   { printf(" if \n"); }
         ;
 
-if_body: '(' PROGN block ')'  { ; }
+if_body: '(' PROGN block ')'            { ; }
        ;
 
-operation: '(' '+' expr expr ')'                 { printf("+ "); }
-         | '(' '-' expr expr ')'                 { printf("- "); }
-         | '(' '-' expr ')'                      { printf("negate "); }
-         | '(' '*' expr expr ')'                 { printf("* "); }
-         | '(' '/' expr expr ')'                 { printf("/ "); }
-         | '(' MOD expr expr ')'                 { printf("%s ", $2.code); }
-         | '(' '=' expr expr ')'                 { printf("= "); }
-         | '(' NEQ expr expr ')'                 { printf("= 0= "); }
-         | '(' '<' expr expr ')'                 { printf("< "); }
-         | '(' LE expr expr ')'                  { printf("%s ", $2.code); }
-         | '(' '>' expr expr ')'                 { printf("> "); }
-         | '(' GE expr expr ')'                  { printf("%s ", $2.code); }
-         | '(' AND expr expr ')'                 { printf("%s ", $2.code); }
-         | '(' OR expr expr ')'                  { printf("%s ", $2.code); }
-         | '(' NOT expr ')'                      { printf("0= "); }
+operation: '(' '+' expr expr ')'        { printf("+ "); }
+         | '(' '-' expr expr ')'        { printf("- "); }
+         | '(' '-' expr ')'             { printf("negate "); }
+         | '(' '*' expr expr ')'        { printf("* "); }
+         | '(' '/' expr expr ')'        { printf("/ "); }
+         | '(' MOD expr expr ')'        { printf("%s ", $2.code); }
+         | '(' '=' expr expr ')'        { printf("= "); }
+         | '(' NEQ expr expr ')'        { printf("= 0= "); }
+         | '(' '<' expr expr ')'        { printf("< "); }
+         | '(' LE expr expr ')'         { printf("%s ", $2.code); }
+         | '(' '>' expr expr ')'        { printf("> "); }
+         | '(' GE expr expr ')'         { printf("%s ", $2.code); }
+         | '(' AND expr expr ')'        { printf("%s ", $2.code); }
+         | '(' OR expr expr ')'         { printf("%s ", $2.code); }
+         | '(' NOT expr ')'             { printf("0= "); }
          ;
 
-expr : atom      { ; }
-     | operation { ; }
+expr : atom                             { ; }
+     | operation                        { ; }
      ;
 
-atom : NUMBER  { printf("%d ", $1.value); }
-     | IDENTIF { printf("%s @ ", $1.code); }
+atom : NUMBER                           { printf("%d ", $1.value); }
+     | IDENTIF                          { printf("%s @ ", $1.code); }
      ;
 
 %%

@@ -1,3 +1,6 @@
+/*412, Alejandro Quirante Sanz, Carlos Martin Gallardo*/
+/*100522183@alumnos.uc3m.es, 100522258@alumnos.uc3m.es*/
+
 %{                          // SECCION 1 Declaraciones de C-Yacc
 
 #include <stdio.h>

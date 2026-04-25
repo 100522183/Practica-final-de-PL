@@ -270,11 +270,12 @@ expr_unaria: expr_primaria                      { $$ = $1; }
                                                   $$.code = gen_code(temp); }
              ;
 
-expr_primaria: IDENTIF                          { if (is_local_var($1.code)){
-                                                  $$.code = concat_with_function($1.code); } }
+expr_primaria: IDENTIF                          { sprintf(temp, "%s", concat_with_function($1.code));
+                                                  $$.code = gen_code(temp);
+                                                }
              | NUMBER                           { sprintf(temp, "%d", $1.value);
                                                   $$.code = gen_code(temp); }
-             | '(' expresion ')'                { $$ = $2; }
+             | '(' expresion ')'                { $$.code = $2.code; }
              | IDENTIF '[' expresion ']'        { char *var_name = concat_with_function($1.code);
                                                   sprintf(temp, "(aref %s %s)", var_name, $3.code);
                                                   $$.code = gen_code(temp); }

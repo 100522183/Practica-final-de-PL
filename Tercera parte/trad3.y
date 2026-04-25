@@ -122,7 +122,7 @@ declaracion_global: INTEGER lista_global ';'    { $$.code = $2.code; }
              ;
 
 lista_global: init_global                       { $$.code = $1.code; }
-             | lista_global ',' init_global     { sprintf(temp, "%s%s", $1.code, $3.code);
+             | init_global ',' lista_global    { sprintf(temp, "%s%s", $1.code, $3.code);
                                                   $$.code = gen_code(temp); }
              ;
 
@@ -190,7 +190,7 @@ declaracion_local: INTEGER lista_local ';'      { $$.code = $2.code; }
              ;
 
 lista_local: init_local                         { $$.code = $1.code; }
-             | lista_local ',' init_local       { sprintf(temp, "%s%s", $1.code, $3.code);
+             | init_local',' lista_local       { sprintf(temp, "%s%s", $1.code, $3.code);
                                                   $$.code = gen_code(temp); }
              ;
 
@@ -293,8 +293,8 @@ printf_funcion: PRINTF '(' STRING ')'           { $$.code = gen_code(""); }
              ;
 
 argumentos_printf: argumento_printf             { $$.code = $1.code; }
-             | argumentos_printf ',' 
-               argumento_printf                 { sprintf(temp, "%s %s", $1.code, $3.code);
+             | argumento_printf ',' 
+               argumentos_printf                { sprintf(temp, "%s %s", $1.code, $3.code);
                                                   $$.code = gen_code(temp); }
              ;
 

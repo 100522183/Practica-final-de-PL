@@ -1,3 +1,6 @@
+/*412, Alejandro Quirante Sanz, Carlos Martin Gallardo*/
+/*100522183@alumnos.uc3m.es, 100522258@alumnos.uc3m.es*/
+
 %{                          // SECCION 1 Declaraciones de C-Yacc
 
 #include <stdio.h>
@@ -157,13 +160,9 @@ parametros:                                     { $$.code = gen_code(""); }
      | lista_parametros                         { $$.code = $1.code; }
      ;
 
-lista_parametros: INTEGER IDENTIF               { add_local_var($2.code);
-                                                  char * var_name = concat_with_function($2.code);
-                                                  sprintf(temp, "%s", var_name);
+lista_parametros: INTEGER IDENTIF               { sprintf(temp, "%s", $2.code);
                                                   $$.code = gen_code(temp); }
-     |  INTEGER IDENTIF ',' lista_parametros    { add_local_var($2.code);
-                                                  char * var_name = concat_with_function($2.code);
-                                                  sprintf(temp, "%s %s", var_name, $4.code);
+     |  INTEGER IDENTIF ',' lista_parametros    { sprintf(temp, "%s %s", $2.code, $4.code);
                                                   $$.code = gen_code(temp); }
      ;
 

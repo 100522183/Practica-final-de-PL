@@ -52,8 +52,12 @@ void clear_local_vars() {
 }
 
 char *concat_with_function(char *var_name) {
-    sprintf(temp, "%s_%s", current_function, var_name);
-    return gen_code(temp);
+    if (is_local_var(var_name)){
+        sprintf(temp, "%s_%s", current_function, var_name);
+        return gen_code(temp);
+    } else{
+        return var_name;
+    }
     ;
 }
 
@@ -182,10 +186,11 @@ sentencia: declaracion_local                    { $$.code = $1.code; }
              | while_stmt                       { $$.code = $1.code; }
              | if_stmt                          { $$.code = $1.code; }
              | for_stmt                         { $$.code = $1.code; }
-             | switch_stmt                      { $$.code = gen_code(""); }
+             | switch_stmt                      { $$.code = $1.code; }
              | llamada_funcion ';'              { $$.code = $1.code; }
              | bloque                           { $$.code = $1.code; }
              | return_stmt ';'                  { $$.code = $1.code; }
+             | BREAK ';'                        { $$.code = gen_code(""); }
              ;
 
 declaracion_local: INTEGER lista_local ';'      { $$.code = $2.code; }
@@ -272,11 +277,12 @@ expr_unaria: expr_primaria                      { $$ = $1; }
                                                   $$.code = gen_code(temp); }
              ;
 
-expr_primaria: IDENTIF                          { if (is_local_var($1.code)){
-                                                  $$.code = concat_with_function($1.code); } }
+expr_primaria: IDENTIF                          { sprintf(temp, "%s", concat_with_function($1.code));
+                                                  $$.code = gen_code(temp);
+                                                }
              | NUMBER                           { sprintf(temp, "%d", $1.value);
                                                   $$.code = gen_code(temp); }
-             | '(' expresion ')'                { $$ = $2; }
+             | '(' expresion ')'                { $$.code = $2.code; }
              | IDENTIF '[' expresion ']'        { char *var_name = concat_with_function($1.code);
                                                   sprintf(temp, "(aref %s %s)", var_name, $3.code);
                                                   $$.code = gen_code(temp); }
@@ -288,7 +294,8 @@ print_funcion: printf_funcion                   { ; }
              | puts_funcion                     { ; } 
              ;
 
-printf_funcion: PRINTF '(' STRING ')'           { $$.code = gen_code(""); }
+printf_funcion: PRINTF '(' STRING ')'           { sprintf(temp, "(print \"%s\")", $3.code);
+                                                  $$.code = gen_code(temp); }
              | PRINTF '(' STRING ',' 
                argumentos_printf ')'            { sprintf(temp, "%s", $5.code);
                                                   $$.code = gen_code(temp); }
@@ -354,26 +361,22 @@ inc_dec: IDENTIF '=' IDENTIF '+' NUMBER         { char *var_name = concat_with_f
                                                   $$.code = gen_code(temp); }
      ;
 
-switch_stmt: SWITCH '(' IDENTIF ')' 
-             switch_bloque                      { $$.code = gen_code(""); }
-             ;
+switch_stmt: SWITCH '(' expresion ')' switch_bloque   { sprintf(temp, "(case %s\n%s)", $3.code, $5.code); 
+                                                        $$.code = gen_code(temp); }
 
-switch_bloque: '{' lista_case default_case '}'  { $$.code = gen_code(""); }
-             ;
+switch_bloque: '{' lista_case default_case '}'  { sprintf(temp, "%s%s", $2.code, $3.code); 
+                                                  $$.code = gen_code(temp); };
 
-lista_case:                                     { ; }
-     | case_item lista_case                     { ; }
-     ;
+lista_case:                                     { $$.code = gen_code(""); }
+     | case_item lista_case                     { sprintf(temp, "%s\n%s", $1.code, $2.code); 
+                                                  $$.code = gen_code(temp); };
 
-case_item: CASE NUMBER ':' lista_sentencias     { sprintf(temp, "(%d ", $2.value);
-                                                  $$.code = gen_code(temp);
-                                                  printf(") "); }
-     ;
+case_item: CASE expresion ':' lista_sentencias  { sprintf(temp, "  (%s %s)", $2.code, $4.code); 
+                                                  $$.code = gen_code(temp); };
 
-default_case:                                   { ; }
-     | DEFAULT ':' lista_sentencias             { printf("(otherwise ");
-                                                  printf(") "); }
-     ;
+default_case:                                   { $$.code = gen_code(""); }
+     | DEFAULT ':' lista_sentencias             { sprintf(temp, "  (otherwise %s)", $3.code); 
+                                                  $$.code = gen_code(temp); };
 
 return_stmt: RETURN expresion                   { sprintf(temp, "(return-from %s %s) ", current_function, $2.code);
                                                   $$.code = gen_code(temp); }

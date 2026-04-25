@@ -1,10 +1,21 @@
-main() {
-    int dia = 3;
-    switch (dia) {
-        case 1: puts("Lunes"); break;
-        case 2: puts("Martes"); break;
-        case 3: puts("Miercoles"); break;
-        default: puts("Otro");
+#include <stdio.h>
+
+int a ;
+int b ;
+
+main () 
+{
+	a = 10 ;
+	
+	switch (a){
+        case 3:
+            puts("Hola");
+        case 6:
+            printf("Bueno");
+        case 10:
+            printf("Adios");
     }
 }
+
 //@ (main)
+

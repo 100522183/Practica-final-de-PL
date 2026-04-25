@@ -52,11 +52,9 @@ void clear_local_vars() {
 }
 
 char *concat_with_function(char *var_name) {
-    if (is_local_var(var_name) && strcmp(current_function, "global") != 0) {
-        sprintf(temp, "%s_%s", current_function, var_name);
-        return gen_code(temp);
-    }
-    return var_name;
+    sprintf(temp, "%s_%s", current_function, var_name);
+    return gen_code(temp);
+    ;
 }
 
 typedef struct s_attr {
@@ -160,9 +158,13 @@ parametros:                                     { $$.code = gen_code(""); }
      | lista_parametros                         { $$.code = $1.code; }
      ;
 
-lista_parametros: INTEGER IDENTIF               { sprintf(temp, "%s", $2.code);
+lista_parametros: INTEGER IDENTIF               { add_local_var($2.code);
+                                                  char * var_name = concat_with_function($2.code);
+                                                  sprintf(temp, "%s", var_name);
                                                   $$.code = gen_code(temp); }
-     |  INTEGER IDENTIF ',' lista_parametros    { sprintf(temp, "%s %s", $2.code, $4.code);
+     |  INTEGER IDENTIF ',' lista_parametros    { add_local_var($2.code);
+                                                  char * var_name = concat_with_function($2.code);
+                                                  sprintf(temp, "%s %s", var_name, $4.code);
                                                   $$.code = gen_code(temp); }
      ;
 

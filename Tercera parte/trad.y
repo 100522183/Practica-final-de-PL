@@ -49,11 +49,9 @@ void clear_local_vars() {
 }
 
 char *concat_with_function(char *var_name) {
-    if (is_local_var(var_name) && strcmp(current_function, "global") != 0) {
-        sprintf(temp, "%s_%s", current_function, var_name);
-        return gen_code(temp);
-    }
-    return var_name;
+    sprintf(temp, "%s_%s", current_function, var_name);
+    return gen_code(temp);
+    ;
 }
 
 typedef struct s_attr {

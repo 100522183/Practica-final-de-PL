@@ -1,0 +1,11 @@
+#include <stdio.h>
+int f(int n) {
+    if (n == 0) return 0;
+    if (n == 1) return 1;
+    if (n == 2) return 2;
+    return 3;
+}
+main() {
+    f(1);
+}
+//@ (main)

@@ -49,8 +49,12 @@ void clear_local_vars() {
 }
 
 char *concat_with_function(char *var_name) {
-    sprintf(temp, "%s_%s", current_function, var_name);
-    return gen_code(temp);
+    if (is_local_var(var_name)){
+        sprintf(temp, "%s_%s", current_function, var_name);
+        return gen_code(temp);
+    } else{
+        return var_name;
+    }
     ;
 }
 
